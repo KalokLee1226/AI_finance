@@ -11,9 +11,9 @@ import os
 import json
 import pandas as pd
 
-app = FastAPI(title="Global Commodity AI Agent API")
+app = FastAPI(title="Global Commodity AI Agent API") #创建 FastAPI 实例
 
-# Setup SQLite Database
+# 初始化 SQLite 数据库
 def init_db():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -24,7 +24,7 @@ def init_db():
 
 init_db()
 
-# Enable CORS for frontend interaction
+# 配置跨域访问（CORS）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,57 +35,88 @@ app.add_middleware(
 
 # --- Configuration & Keys ---
 # User provided Deepseek Key
+# 配置 API Key / OpenAI 客户端
 DEEPSEEK_API_KEY = "sk-0a2b77e7cb9f469eaa2c585e1013a2df" 
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 
 # --- Models ---
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
 class RegisterRequest(BaseModel):
     username: str
     password: str
 
-class ReportRequest(BaseModel):
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class ReportRequest(BaseModel):   
     commodity: str
 
-# --- Endpoints ---
 
-def hash_password(password: str):
-    return hashlib.sha256(password.encode()).hexdigest()
+# --- 初始化数据库 ---
+def init_db():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    # 多加一个 salt 字段
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY, 
+            password TEXT,
+            salt TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
+init_db()
+
+# --- 密码哈希函数，带盐 ---
+def hash_password(password: str, salt=None):
+    # 如果没有提供 salt，就生成一个随机盐
+    if not salt:
+        salt = os.urandom(16).hex()  # 16 字节随机盐
+    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
+    return hashed, salt
+
+# --- 注册接口 ---
 @app.post("/api/register")
 async def register(req: RegisterRequest):
     if len(req.username) < 3 or len(req.password) < 6:
-        raise HTTPException(status_code=400, detail="Username needs 3+ chars, password 6+ chars")
+        raise HTTPException(status_code=400, detail="用户名至少3个字符，密码至少6个字符")
     
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE username=?", (req.username,))
     if c.fetchone():
         conn.close()
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(status_code=400, detail="用户名已存在")
     
-    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (req.username, hash_password(req.password)))
+    hashed_pw, salt = hash_password(req.password)
+    c.execute("INSERT INTO users (username, password, salt) VALUES (?, ?, ?)", 
+              (req.username, hashed_pw, salt))
     conn.commit()
     conn.close()
     return {"status": "success", "message": "注册成功，请登录"}
 
+# --- 登录接口 ---
 @app.post("/api/login")
 async def login(req: LoginRequest):
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE username=? AND password=?", (req.username, hash_password(req.password)))
-    user = c.fetchone()
+    c.execute("SELECT password, salt FROM users WHERE username=?", (req.username,))
+    row = c.fetchone()
     conn.close()
     
-    if user:
-        return {"token": f"jwt-token-{req.username}", "status": "success"}
-    raise HTTPException(status_code=401, detail="Invalid username or password")
+    if row:
+        stored_hash, salt = row
+        if hash_password(req.password, salt)[0] == stored_hash:
+            return {"status": "success", "message": "登录成功"}
+    
+    raise HTTPException(status_code=401, detail="用户名或密码错误")
 
+
+# 获取市场数据
 @app.get("/api/market-data/{symbol}")
 async def get_market_data(symbol: str):
     """
@@ -143,6 +174,7 @@ async def get_market_data(symbol: str):
         "ma20": ma20
     }
 
+# 获取新闻
 @app.get("/api/news")
 async def get_news():
     """
@@ -180,6 +212,7 @@ async def get_news():
         
     return {"news": news_list}
 
+# AI分析报告
 @app.post("/api/generate-report")
 async def generate_ai_report(req: ReportRequest):
     """
