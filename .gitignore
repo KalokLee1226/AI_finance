@@ -1,0 +1,25 @@
+# Node.js / Vite (前端忽略)
+node_modules/
+dist/
+.npm
+package-lock.json
+
+# Python (后端忽略)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+
+# 数据库与隐私信息
+users.db
+*.sqlite3
+.env
+
+# 编辑器与系统缓存
+.vscode/
+.idea/
+.DS_Store
+*.log
