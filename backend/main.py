@@ -1,3 +1,4 @@
+from models import RegisterRequest, LoginRequest, ReportRequest
 import sqlite3
 import hashlib
 from fastapi import FastAPI, HTTPException, Form, Depends
@@ -10,6 +11,7 @@ from openai import OpenAI
 import os
 import json
 import pandas as pd
+
 
 app = FastAPI(title="Global Commodity AI Agent API") #创建 FastAPI 实例
 
@@ -41,17 +43,7 @@ DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 
-# --- Models ---
-class RegisterRequest(BaseModel):
-    username: str
-    password: str
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-class ReportRequest(BaseModel):   
-    commodity: str
 
 
 # --- 初始化数据库 ---
