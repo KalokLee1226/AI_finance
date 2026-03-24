@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Commodity Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-top: 30px; }
+        ul { list-style: none; padding-left: 0; }
+        li { margin-bottom: 10px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 5px 10px; text-align: center; }
+        th { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Commodity Dashboard</h1>
+
+    <h2>Latest News</h2>
+    <ul id="news-list">Loading...</ul>
+
+    <h2>Commodity Data</h2>
+    <select id="commodity-select">
+        <option value="GOLD">Gold</option>
+        <option value="OIL">Oil</option>
+        <option value="SILVER">Silver</option>
+    </select>
+    <button onclick="loadCommodityData()">Load Data</button>
+
+    <table id="commodity-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Open</th>
+                <th>Close</th>
+                <th>Low</th>
+                <th>High</th>
+                <th>Volume</th>
+                <th>MA5</th>
+                <th>MA10</th>
+                <th>MA20</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function loadNews() {
+            const res = await fetch('http://127.0.0.1:8000/api/news');
+            const data = await res.json();
+            const listEl = document.getElementById('news-list');
+            listEl.innerHTML = '';
+            data.news.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.title} [${item.source}]`;
+                listEl.appendChild(li);
+            });
+        }
+
+        async function loadCommodityData() {
+            const symbol = document.getElementById('commodity-select').value;
+            const res = await fetch(`http://127.0.0.1:8000/api/market-data/${symbol}`);
+            const data = await res.json();
+            const tbody = document.querySelector('#commodity-table tbody');
+            tbody.innerHTML = '';
+            data.dates.forEach((date, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${date}</td>
+                    <td>${data.kline[i][0]}</td>
+                    <td>${data.kline[i][1]}</td>
+                    <td>${data.kline[i][2]}</td>
+                    <td>${data.kline[i][3]}</td>
+                    <td>${data.volumes[i]}</td>
+                    <td>${data.ma5[i] ?? '-'}</td>
+                    <td>${data.ma10[i] ?? '-'}</td>
+                    <td>${data.ma20[i] ?? '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 初始加载新闻
+        loadNews();
+    </script>
+</body>
+</html>
