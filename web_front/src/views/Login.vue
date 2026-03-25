@@ -47,6 +47,17 @@
           </div>
         </div>
 
+        <!-- 邮箱，仅注册时必填，用于接收智能告警邮件 -->
+        <div v-if="!isLogin">
+          <label class="block text-sm font-medium text-gray-200 mb-1">邮箱</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12H8m8-4H8m9-7H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2z" /></svg>
+            </span>
+            <input v-model="form.email" type="email" required placeholder="用于接收智能告警邮件" class="pl-10 block w-full rounded-lg bg-black/20 border-white/10 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 transition-colors">
+          </div>
+        </div>
+
         <div v-if="error" class="bg-red-500/20 text-red-200 text-sm p-3 rounded-lg border border-red-500/50 flex items-center">
           <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
           {{ error }}
@@ -73,7 +84,7 @@ import request from '../api/request'
 
 const router = useRouter()
 const isLogin = ref(true)
-const form = ref({ username: 'admin', password: 'admin123' })
+const form = ref({ username: 'admin', password: 'admin123', email: '' })
 const error = ref('')
 const successMsg = ref('')
 const loading = ref(false)
@@ -95,7 +106,8 @@ const handleSubmit = async () => {
     }
   } else {
     try {
-      const res = await request.post('/register', form.value)
+      const payload = { username: form.value.username, password: form.value.password, email: form.value.email }
+      const res = await request.post('/register', payload)
       if (res.status === 'success') {
         successMsg.value = res.message
         setTimeout(() => {
