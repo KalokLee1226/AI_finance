@@ -2,7 +2,8 @@ import axios from 'axios'
 
 const request = axios.create({
   baseURL: '/api', // Proxied to backend
-  timeout: 60000
+  // 延长超时时间，避免 DeepSeek 大模型生成较长研报时前端过早超时
+  timeout: 120000
 })
 
 request.interceptors.request.use(config => {
