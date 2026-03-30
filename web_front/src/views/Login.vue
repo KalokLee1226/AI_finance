@@ -199,6 +199,8 @@ const handleSubmit = async () => {
       const res = await request.post('/login', form.value)
       if (res.status === 'success') {
         localStorage.setItem('token', res.token)
+        // 记录当前登录用户名，供仪表盘展示
+        localStorage.setItem('username', form.value.username)
         if (remember.value) {
           localStorage.setItem('remember_username', form.value.username)
         } else {

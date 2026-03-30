@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 logging.basicConfig(level=logging.INFO)
 
-router = APIRouter(prefix="/expert", tags=["Expert Views"])
+router = APIRouter(prefix="/api", tags=["Expert Views"])
 
 # 可稳定抓取的 RSS 源
 RSS_SOURCES = [
@@ -46,10 +46,10 @@ async def fetch_expert_opinions(limit=10):
     all_results = [item for sublist in results for item in sublist]
     return all_results
 
-@router.get("/latest")
+@router.get("/expert/latest")
 async def get_expert_views(limit: int = 10):
     """
-    GET /expert/latest?limit=10
+    GET /api/expert/latest?limit=10
     limit: 每个 RSS 源抓取条数，默认 10
     """
     data = await fetch_expert_opinions(limit)

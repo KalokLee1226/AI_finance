@@ -62,10 +62,17 @@ async def async_scrape_news(client: httpx.AsyncClient, source: Dict, limit: int 
                     url_link = f"https://www.ft.com{url_link}"
                 elif "cnn.com" in source["url"]:
                     url_link = f"https://edition.cnn.com{url_link}"
+                elif "yahoo.com" in source["url"]:
+                    url_link = f"https://finance.yahoo.com{url_link}"
                 elif "sina.com.cn" in source["url"]:
                     url_link = f"https://finance.sina.com.cn{url_link}"
                 elif "eastmoney.com" in source["url"]:
                     url_link = f"https://finance.eastmoney.com{url_link}"
+
+            # 某些情况下 Yahoo 会返回错误跳转链接，如 https://finance.yahoo.com/?err=404
+            # 这类链接对用户没有意义，这里直接丢弃，避免前端点进去就是错误页。
+            if url_link and "finance.yahoo.com" in url_link and "err=404" in url_link:
+                url_link = None
             if title and len(title) > 10:
                 news_list.append(
                     {
