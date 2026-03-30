@@ -55,13 +55,13 @@ class BaiduTranslator:
             return None
 
 # ------------------ FastAPI 路由 ------------------
-router = APIRouter()
+router = APIRouter(prefix="/api")
 translator = BaiduTranslator()
 
 @router.get("/translate")
 def translate(q: str, from_lang: str = "auto", to_lang: str = "zh"):
     """
-    GET /translate?q=Hello&from_lang=auto&to_lang=zh
+    GET /api/translate?q=Hello&from_lang=auto&to_lang=zh
     """
     result = translator.translate(q, from_lang, to_lang)
     return {"original": q, "translated": result}
