@@ -436,12 +436,33 @@
                 <p class="text-zinc-300 mt-2 text-sm">正在深度解析宏观关联与历史波幅</p>
               </div>
 
-              <!-- Report Content -->
-              <div
-                v-else-if="reportHtml"
-                class="prose prose-slate max-w-none w-full markdown-body bg-zinc-900/60 p-6 rounded-xl border border-white/5 text-zinc-100"
-                v-html="reportHtml"
-              ></div>
+              <!-- Report Content preview：右侧只展示预览，完整内容放大弹窗阅读 -->
+              <div v-else-if="reportHtml" class="relative flex flex-col gap-3">
+                <div
+                  class="prose prose-slate max-w-none w-full markdown-body bg-zinc-900/60 p-6 rounded-xl border border-white/5 text-zinc-100 max-h-72 overflow-hidden"
+                  v-html="reportHtml"
+                ></div>
+                <!-- 渐隐遮罩，提示还有更多内容在下方 -->
+                <div
+                  class="pointer-events-none absolute bottom-16 left-0 right-0 h-16 bg-gradient-to-t from-zinc-900/95 to-transparent rounded-b-xl"
+                ></div>
+                <div class="flex items-center justify-between mt-1">
+                  <span class="text-[11px] text-zinc-400">
+                    {{
+                      lang === 'en'
+                        ? 'Preview of AI report · click to read in a wider panel'
+                        : '当前为研报预览，要获得最佳阅读体验请在大屏弹窗中查看完整内容'
+                    }}
+                  </span>
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-full border border-zinc-600 bg-zinc-900/80 text-[11px] text-zinc-200 hover:bg-white hover:text-black transition-colors"
+                    @click="openCurrentReportDialog"
+                  >
+                    {{ lang === 'en' ? 'Open full report' : '在大屏阅读完整研报' }}
+                  </button>
+                </div>
+              </div>
 
               <!-- Empty State -->
               <div
@@ -771,6 +792,45 @@
       </div>
     </div>
 
+    <!-- 当前生成研报的大屏阅读弹窗 -->
+    <div
+      v-if="showCurrentReportDialog"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-[90%] max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
+      >
+        <div
+          class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80"
+        >
+          <div class="flex flex-col">
+            <div class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span class="text-slate-900">📘 当前策略研报</span>
+              <span class="text-slate-500 text-xs">
+                {{ getCurrentCommodityLabel() }}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-0.5">
+              {{ lang === 'en' ? 'Full-screen reading for better layout.' : '在更宽的阅读区域中查看完整 Markdown 研报。' }}
+            </div>
+          </div>
+          <button
+            type="button"
+            class="w-7 h-7 rounded-full flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-slate-200"
+            @click="closeCurrentReportDialog"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="flex-1 overflow-auto p-6 bg-slate-50/60">
+          <div
+            class="prose prose-slate max-w-none w-full markdown-body bg-white p-6 rounded-xl border border-slate-200"
+            v-html="currentReportDetailHtml"
+          ></div>
+        </div>
+      </div>
+    </div>
+
     <!-- 历史研报详情弹窗 -->
     <div
       v-if="selectedHistoryReport"
@@ -898,6 +958,9 @@ const newsTranslatingIndex = ref(null)
 const reportHtml = ref('')
 const reportLoading = ref(false)
 const chartLoading = ref(false)
+// 当前生成研报的大屏阅读状态
+const showCurrentReportDialog = ref(false)
+const currentReportDetailHtml = ref('')
 
 // AI 人物/风格配置
 const personaKey = ref('default')
@@ -1122,6 +1185,17 @@ const generateReport = async () => {
   } finally {
     reportLoading.value = false
   }
+}
+
+const openCurrentReportDialog = () => {
+  if (!reportHtml.value) return
+  currentReportDetailHtml.value = reportHtml.value
+  showCurrentReportDialog.value = true
+}
+
+const closeCurrentReportDialog = () => {
+  showCurrentReportDialog.value = false
+  currentReportDetailHtml.value = ''
 }
 
 const sendChat = async () => {

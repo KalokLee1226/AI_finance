@@ -28,13 +28,6 @@ NEWS_CACHE_TTL = int(os.getenv("NEWS_CACHE_TTL", "180"))  # 默认缓存 3 分�
 # 文本为手工撰写的概括性内容，不依赖任何第三方源，保证在离线/内网环境中也能有基本信息可看。
 FALLBACK_NEWS: List[Dict[str, Any]] = [
     {
-        "title": "本地内置的宏观商品市场概览",
-        "source": "新浪新闻",
-        "url": None,
-        "time": datetime.utcnow().isoformat() + "Z",
-        "summary": "由于当前环境无法连接外部新闻站点，系统展示一组本地示例资讯，帮助你在内网环境中调试和体验 Dashboard。",
-    },
-    {
         "title": "黄金在避险情绪抬升时通常获得支撑",
         "source": "微博财经",
         "url": None,
